@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSO Social CRM</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#f4f3f0;--surface:#fff;--surface2:#f0ede8;--surface3:#e8e5e0;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.16);
+  --text:#181815;--text2:#5a5956;--text3:#8a8784;
+  --blue:#1558A8;--blue-bg:#deeaf8;--blue-text:#0a3d78;
+  --teal-bg:#d8f0e8;--teal-text:#064d3c;
+  --amber-bg:#faecd0;--amber-text:#5a3300;
+  --red:#c0392b;--red-bg:#fbe8e8;--red-text:#6b1212;
+  --green-bg:#e0f0d8;--green-text:#1a4e0e;
+  --purple-bg:#eceaf8;--purple-text:#2d2068;
+  --coral-bg:#fae4d8;--coral-text:#6a2008;
+  --pink-bg:#f8e0ea;--pink-text:#6a0830;
+  --gray-bg:#f1efe8;--gray-text:#444441;
+  --r:6px;--rl:10px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#161614;--surface:#1e1e1c;--surface2:#262624;--surface3:#2e2e2c;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);
+  --text:#ede9e2;--text2:#a8a49e;--text3:#706e6a;
+  --blue-bg:#0d2d52;--blue-text:#8fc4f4;
+  --teal-bg:#053326;--teal-text:#7dd4b8;
+  --amber-bg:#3d2600;--amber-text:#f8c870;
+  --red-bg:#3d1010;--red-text:#f8a8a8;
+  --green-bg:#142e08;--green-text:#9ee080;
+  --purple-bg:#1e1840;--purple-text:#c8c0f8;
+  --coral-bg:#3d180a;--coral-text:#f8b898;
+  --pink-bg:#3d0820;--pink-text:#f8b0cc;
+  --gray-bg:#2c2c2a;--gray-text:#d3d1c7;
+}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;font-size:13px}
+
+/* PASSWORD GATE */
+.pw-gate{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
+.pw-box{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:44px 48px;width:380px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.15)}
+.pw-logo-mark{width:48px;height:48px;background:#1558A8;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:14px;margin:0 auto 18px}
+.pw-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px}
+.pw-sub{font-size:11px;color:var(--text3);margin-bottom:28px}
+.pw-input{width:100%;padding:11px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:15px;outline:none;text-align:center;letter-spacing:.12em;margin-bottom:8px}
+.pw-input:focus{border-color:var(--blue)}
+.pw-input.shake{animation:pwshake .4s ease}
+@keyframes pwshake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.pw-error{font-size:11px;color:var(--red);min-height:16px;margin-bottom:10px}
+.pw-btn{width:100%;padding:11px;background:#1558A8;color:white;border:none;border-radius:var(--r);cursor:pointer;font-size:13px;font-weight:700;margin-bottom:14px;transition:opacity .15s}
+.pw-btn:hover{opacity:.88}
+.pw-remember{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--text3);cursor:pointer}
+.pw-remember input{accent-color:var(--blue);cursor:pointer}
+
+/* LOADING */
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:998;gap:12px}
+.loading-logo{font-size:24px;font-weight:700;color:var(--blue)}
+.loading-sub{font-size:12px;color:var(--text3)}
+.loading-spinner{width:24px;height:24px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SYNC DOT */
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);display:inline-block;vertical-align:middle;margin-left:3px;transition:background .3s}
+.sync-dot.synced{background:#1D9E75}
+.sync-dot.syncing{background:#e67e22;animation:pulse 1s infinite}
+.sync-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:0.5px solid var(--border2);padding:0.9rem 1.4rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo-mark{width:30px;height:30px;background:#1558A8;border-radius:6px;display:flex;align-items:center;justify-content:center;color:white;font-size:10px;font-weight:800;flex-shrink:0}
+.logo-text{font-size:13px;font-weight:600;color:var(--text)}
+.logo-sub{font-size:10px;color:var(--text3)}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hdr-pill{font-size:11px;color:var(--text3);padding:3px 10px;background:var(--surface2);border-radius:20px;display:flex;align-items:center;gap:3px}
+.hdr-pill span{font-weight:600;color:var(--text)}
+.user-input{padding:4px 8px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:11px;width:110px;outline:none}
+.user-input:focus{border-color:var(--blue)}
+
+/* MAIN */
+.main{padding:1rem 1.4rem;max-width:1600px;margin:0 auto}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:1rem}
+.stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--rl);padding:10px 14px;cursor:pointer;transition:border-color .12s}
+.stat:hover{border-color:var(--border2)}
+.stat.active-stat{border-color:var(--blue);background:var(--blue-bg)}
+.stat-val{font-size:22px;font-weight:700;color:var(--text)}
+.stat-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.stat-sub{font-size:11px;color:var(--text2);margin-top:3px;font-weight:500}
+
+/* CONTROLS */
+.controls{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;align-items:center}
+.fbtn{padding:5px 12px;border-radius:20px;border:0.5px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;font-size:11px;font-weight:500;transition:all .12s;white-space:nowrap}
+.fbtn:hover:not(.active){color:var(--text)}
+.fbtn.active{background:#1558A8;border-color:#1558A8;color:white}
+.cnt{font-size:10px;opacity:.7;margin-left:2px}
+.search-wrap{margin-left:auto;display:flex;gap:6px;align-items:center}
+input[type=search]{font-size:12px;padding:5px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--surface);color:var(--text);width:220px;outline:none}
+input[type=search]:focus{border-color:#1558A8}
+.sort-select{font-size:11px;padding:5px 8px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;outline:none}
+.add-btn{padding:6px 14px;background:var(--green-bg);color:var(--green-text);border:0.5px solid var(--green-text);border-radius:20px;cursor:pointer;font-size:11px;font-weight:600}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+
+/* CARD */
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--rl);padding:1rem 1.1rem;transition:border-color .15s;position:relative}
+.card:hover{border-color:var(--border2)}
+.card.status-hot{border-left:3px solid #c0392b}
+.card.status-pending{border-left:3px solid #e67e22}
+.card.status-watch{border-left:3px solid #2980b9}
+.card.status-unverified{border-left:3px solid #E24B4A;opacity:.85}
+.card.overdue{border-color:#c0392b;box-shadow:0 0 0 1px rgba(192,57,43,0.15)}
+.card-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.av-blue{background:var(--blue-bg);color:var(--blue-text)}
+.av-teal{background:var(--teal-bg);color:var(--teal-text)}
+.av-amber{background:var(--amber-bg);color:var(--amber-text)}
+.av-purple{background:var(--purple-bg);color:var(--purple-text)}
+.av-coral{background:var(--coral-bg);color:var(--coral-text)}
+.av-pink{background:var(--pink-bg);color:var(--pink-text)}
+.av-gray{background:var(--gray-bg);color:var(--gray-text)}
+.av-green{background:var(--green-bg);color:var(--green-text)}
+.av-red{background:var(--red-bg);color:var(--red-text)}
+.card-name-area{flex:1;min-width:0}
+.cname{font-size:13px;font-weight:600;color:var(--text);margin-bottom:1px}
+.crole{font-size:11px;color:var(--text2);line-height:1.4}
+.edit-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:2px 4px;border-radius:4px;font-size:12px;flex-shrink:0;opacity:0;transition:opacity .15s}
+.card:hover .edit-btn{opacity:1}
+.edit-btn:hover{background:var(--surface2);color:var(--text)}
+
+/* BADGES */
+.badges{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500}
+.cat-buyer{background:var(--blue-bg);color:var(--blue-text)}
+.cat-door{background:var(--teal-bg);color:var(--teal-text)}
+.cat-amp{background:var(--purple-bg);color:var(--purple-text)}
+.pri-hot{background:var(--red-bg);color:var(--red-text)}
+.pri-warm{background:var(--amber-bg);color:var(--amber-text)}
+.pri-nurture{background:var(--green-bg);color:var(--green-text)}
+.badge-plat{background:var(--surface2);color:var(--text2)}
+.badge-overdue{background:var(--red-bg);color:var(--red-text)}
+.badge-due-soon{background:var(--amber-bg);color:var(--amber-text)}
+
+/* STATUS */
+.status-row{display:flex;align-items:center;gap:5px;margin-bottom:8px}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-active{background:#1D9E75}
+.dot-pending{background:#e67e22}
+.dot-watch{background:#2980b9}
+.dot-unverified{background:#E24B4A}
+.dot-hot{background:#c0392b}
+.status-text{font-size:10px;color:var(--text2)}
+
+/* STRENGTH */
+.strength-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.strength-label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;width:70px;flex-shrink:0}
+.strength-dots{display:flex;gap:3px}
+.sdot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--border2);cursor:pointer;transition:all .12s}
+.sdot.filled-1{background:#c0392b;border-color:#c0392b}
+.sdot.filled-2{background:#e67e22;border-color:#e67e22}
+.sdot.filled-3{background:#f1c40f;border-color:#f1c40f}
+.sdot.filled-4{background:#2ecc71;border-color:#2ecc71}
+.sdot.filled-5{background:#1558A8;border-color:#1558A8}
+.strength-text{font-size:10px;color:var(--text3)}
+
+/* MISC */
+.divider{border:none;border-top:0.5px solid var(--border);margin:8px 0}
+.sec-label{font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--text3);margin-bottom:3px}
+.info-row{display:flex;gap:6px;font-size:11px;color:var(--text2);margin-bottom:3px;align-items:flex-start;line-height:1.5}
+.info-row i{font-size:13px;flex-shrink:0;margin-top:1px;color:var(--text3)}
+.date-field{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.date-field label{font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.date-field input[type=date]{font-size:11px;padding:3px 6px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--surface2);color:var(--text);outline:none;cursor:pointer}
+.date-field input[type=date]:focus{border-color:var(--blue)}
+
+/* BOXES */
+.action-box{background:var(--blue-bg);border-radius:var(--r);padding:7px 9px;margin-top:6px}
+.action-label{font-size:9px;font-weight:700;color:var(--blue-text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.action-text{font-size:11px;color:var(--blue-text);line-height:1.5}
+.alert-box{background:var(--surface2);border-radius:var(--r);padding:7px 9px;margin-top:5px}
+.alert-label{font-size:9px;font-weight:700;color:var(--amber-text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.alert-text{font-size:11px;color:var(--text2);line-height:1.5}
+.nso-angle{font-size:11px;color:var(--text2);line-height:1.5;font-style:italic}
+.conv-box{background:var(--green-bg);border-radius:var(--r);padding:7px 9px;margin-top:5px}
+.conv-label{font-size:9px;font-weight:700;color:var(--green-text);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.conv-text{font-size:11px;color:var(--green-text);line-height:1.5}
+.notes-area{margin-top:6px}
+.notes-area textarea{width:100%;min-height:60px;padding:6px 8px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--surface2);color:var(--text);font-size:11px;resize:vertical;outline:none;font-family:inherit;line-height:1.5}
+.notes-area textarea:focus{border-color:var(--blue)}
+.notes-save{margin-top:4px;padding:4px 10px;background:var(--green-bg);color:var(--green-text);border:0.5px solid var(--green-text);border-radius:var(--r);cursor:pointer;font-size:10px;font-weight:600}
+.notes-saved{font-size:10px;color:var(--green-text);margin-left:6px;opacity:0;transition:opacity .3s;display:inline-block}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-start;justify-content:center;padding-top:40px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--rl);width:560px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.modal-header{padding:14px 18px;border-bottom:0.5px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:10;display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:600;color:var(--text)}
+.modal-close{background:var(--surface2);border:none;border-radius:var(--r);padding:4px 10px;cursor:pointer;font-size:12px;color:var(--text2)}
+.modal-body{padding:16px 18px}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);margin-bottom:4px}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:7px 9px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--surface2);color:var(--text);font-size:12px;outline:none;font-family:inherit}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:var(--blue)}
+.form-row textarea{min-height:70px;resize:vertical;line-height:1.5}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-footer{padding:12px 18px;border-top:0.5px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface)}
+.btn-save{padding:7px 18px;background:#1558A8;color:white;border:none;border-radius:var(--r);cursor:pointer;font-size:12px;font-weight:600}
+.btn-cancel{padding:7px 14px;background:var(--surface2);color:var(--text2);border:0.5px solid var(--border2);border-radius:var(--r);cursor:pointer;font-size:12px}
+.btn-delete{padding:7px 14px;background:var(--red-bg);color:var(--red-text);border:0.5px solid var(--red-text);border-radius:var(--r);cursor:pointer;font-size:12px;margin-right:auto}
+.hidden{display:none!important}
+.empty-state{text-align:center;padding:3rem;color:var(--text3);grid-column:1/-1;font-size:13px}
+.footer{font-size:10px;color:var(--text3);text-align:right;margin-top:1rem}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div class="pw-gate" id="pw-gate">
+  <div class="pw-box">
+    <div class="pw-logo-mark">NSO</div>
+    <div class="pw-title">Social CRM</div>
+    <div class="pw-sub">North Sea Offshore · Market Development</div>
+    <input class="pw-input" id="pw-input" type="password" placeholder="Enter password" maxlength="30"
+      onkeydown="if(event.key==='Enter') checkPassword()">
+    <div class="pw-error" id="pw-error"></div>
+    <button class="pw-btn" onclick="checkPassword()">Enter</button>
+    <label class="pw-remember">
+      <input type="checkbox" id="pw-remember" checked>
+      Remember me on this device
+    </label>
+  </div>
+</div>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen hidden" id="loading-screen">
+  <div class="loading-logo">NSO Social CRM</div>
+  <div class="loading-spinner"></div>
+  <div class="loading-sub" id="loading-msg">Connecting to Firebase...</div>
+</div>
+
+<header>
+  <div class="logo-mark">NSO</div>
+  <div>
+    <div class="logo-text">North Sea Offshore — Social CRM</div>
+    <div class="logo-sub">Market Development Intelligence · v6.0 · Firebase</div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-pill">Contacts: <span id="h-total">0</span></div>
+    <div class="hdr-pill">Pipeline: <span id="h-pipeline">$0</span></div>
+    <div class="hdr-pill">Overdue: <span id="h-overdue" style="color:#c0392b">0</span></div>
+    <div class="hdr-pill">Sync <span class="sync-dot" id="sync-dot"></span></div>
+    <input class="user-input" id="username-input" type="text" placeholder="Your name" maxlength="20">
+  </div>
+</header>
+
+<div class="main">
+  <div class="stats">
+    <div class="stat" onclick="filterBy('all',this)"><div class="stat-val" id="sv-all">0</div><div class="stat-lbl">Total contacts</div></div>
+    <div class="stat" onclick="filterBy('hot',this)"><div class="stat-val" id="sv-hot">0</div><div class="stat-lbl">Hot priority</div></div>
+    <div class="stat" onclick="filterBy('buyer',this)"><div class="stat-val" id="sv-buyer">0</div><div class="stat-lbl">Buyers</div></div>
+    <div class="stat" onclick="filterBy('door',this)"><div class="stat-val" id="sv-door">0</div><div class="stat-lbl">Doors</div></div>
+    <div class="stat" onclick="filterBy('amp',this)"><div class="stat-val" id="sv-amp">0</div><div class="stat-lbl">Amplifiers</div></div>
+    <div class="stat" onclick="filterBy('overdue',this)"><div class="stat-val" id="sv-overdue" style="color:#c0392b">0</div><div class="stat-lbl">Overdue</div></div>
+    <div class="stat" onclick="filterBy('convo',this)"><div class="stat-val" id="sv-convo">0</div><div class="stat-lbl">Active convos</div></div>
+  </div>
+  <div class="controls">
+    <button class="fbtn active" onclick="filterBy('all',this)">All <span class="cnt" id="c-all"></span></button>
+    <button class="fbtn" onclick="filterBy('buyer',this)">Buyers <span class="cnt" id="c-buyer"></span></button>
+    <button class="fbtn" onclick="filterBy('door',this)">Doors <span class="cnt" id="c-door"></span></button>
+    <button class="fbtn" onclick="filterBy('amp',this)">Amplifiers <span class="cnt" id="c-amp"></span></button>
+    <button class="fbtn" onclick="filterBy('hot',this)">Hot <span class="cnt" id="c-hot"></span></button>
+    <button class="fbtn" onclick="filterBy('action',this)">Action needed <span class="cnt" id="c-action"></span></button>
+    <button class="fbtn" onclick="filterBy('overdue',this)">Overdue <span class="cnt" id="c-overdue"></span></button>
+    <button class="fbtn" onclick="filterBy('convo',this)">Active convos <span class="cnt" id="c-convo"></span></button>
+    <button class="add-btn" onclick="openAddModal()">+ Add contact</button>
+    <div class="search-wrap">
+      <select class="sort-select" onchange="sortBy(this.value)">
+        <option value="priority">Sort: Priority</option>
+        <option value="nextActionDate">Sort: Next action date</option>
+        <option value="name">Sort: Name</option>
+        <option value="dealValue">Sort: Deal value</option>
+        <option value="strength">Sort: Relationship strength</option>
+      </select>
+      <input type="search" placeholder="Search everything..." oninput="doSearch(this.value)">
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="footer">NSO Social CRM v6.0 · Firebase · North Sea Offshore Technology, Yantai · Market Development: Ian Chen</div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Contact</div>
+      <button class="modal-close" onclick="closeModal()">✕ Close</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn-delete" onclick="deleteContact()" id="btn-delete">Delete</button>
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveContact()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PLAIN SCRIPT — password gate runs before Firebase module ═══ -->
+<script>
+const CORRECT_PASSWORD = 'nso2026';
+const AUTH_KEY = 'nso_crm_auth_v1';
+
+function checkPassword(){
+  const input   = document.getElementById('pw-input');
+  const error   = document.getElementById('pw-error');
+  const remember= document.getElementById('pw-remember');
+  const val     = input.value.trim();
+
+  if(val === CORRECT_PASSWORD){
+    if(remember.checked){
+      localStorage.setItem(AUTH_KEY, 'granted');
+    } else {
+      sessionStorage.setItem(AUTH_KEY, 'granted');
+    }
+    document.getElementById('pw-gate').style.display    = 'none';
+    document.getElementById('loading-screen').classList.remove('hidden');
+    window._crmAuthGranted = true;
+  } else {
+    error.textContent = 'Incorrect password. Try again.';
+    input.value = '';
+    input.classList.remove('shake');
+    void input.offsetWidth;
+    input.classList.add('pwshake');
+    setTimeout(()=>input.classList.remove('pwshake'), 500);
+    input.focus();
+  }
+}
+
+function initAuth(){
+  const granted =
+    localStorage.getItem(AUTH_KEY)    === 'granted' ||
+    sessionStorage.getItem(AUTH_KEY)  === 'granted';
+
+  if(granted){
+    document.getElementById('pw-gate').style.display    = 'none';
+    document.getElementById('loading-screen').classList.remove('hidden');
+    window._crmAuthGranted = true;
+  } else {
+    setTimeout(()=>{ const i=document.getElementById('pw-input'); if(i) i.focus(); }, 120);
+  }
+}
+
+initAuth();
+</script>
+
+<!-- ═══ FIREBASE MODULE ═══ -->
+<script type="module">
+import { initializeApp }          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, doc,
+  setDoc, deleteDoc, onSnapshot, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── FIREBASE CONFIG ───────────────────────────────────────────────────────────
+// *** REPLACE THESE VALUES WITH YOUR OWN FIREBASE CONFIG ***
+const firebaseConfig = {
+  apiKey:            "AIzaSyAM6d3ejWi6WFkA18OnjDFNPmeYkLK8XAw",
+  authDomain:        "nso-pipeline.firebaseapp.com",
+  projectId:         "nso-pipeline",
+  storageBucket:     "nso-pipeline.firebasestorage.app",
+  messagingSenderId: "445104057357",
+  appId:             "1:445104057357:web:b20e098b04a3a81790b944"
+};
+
+// ── COLLECTION NAME — this keeps CRM data separate from pipeline data ─────────
+// The pipeline uses collection "projects"
+// The CRM uses collection "crm_contacts"  ← different collection = completely separate data
+const app = initializeApp(firebaseConfig, "crm-app");   // named instance avoids clash with pipeline
+const db  = getFirestore(app);
+const contactsCol = collection(db, "crm_contacts");     // <-- IMPORTANT: separate from pipeline
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let contacts      = [];
+let currentFilter = 'all';
+let currentSearch = '';
+let currentSort   = 'priority';
+let editingId     = null;
+let currentUser   = localStorage.getItem('nso_crm_user') || '';
+
+const PRIORITY_ORDER = {hot:0, warm:1, nurture:2};
+
+// ── USERNAME ──────────────────────────────────────────────────────────────────
+const usernameInput = document.getElementById('username-input');
+if(currentUser) usernameInput.value = currentUser;
+usernameInput.addEventListener('input', ()=>{
+  currentUser = usernameInput.value.trim() || 'Team';
+  localStorage.setItem('nso_crm_user', currentUser);
+});
+
+// ── SYNC INDICATOR ────────────────────────────────────────────────────────────
+function setSyncState(s){
+  const dot = document.getElementById('sync-dot');
+  if(dot) dot.className = 'sync-dot ' + s;
+}
+
+// ── SEED DATA — loaded on first run if Firebase is empty ──────────────────────
+const SEED = [
+  {id:"HS",initials:"HS",av:"av-purple",name:"Hou Sang (Samson) Cheng",role:"Wind Supply Chain & Manufacturing Researcher, BloombergNEF — Beijing",category:"amp",priority:"hot",platform:"LinkedIn",statusLabel:"Active conversation — substantive 2D/3D exchange underway",statusDot:"dot-hot",hasConvo:true,needsAction:false,unverified:false,dealValue:0,strength:3,nextActionDate:"2026-06-02",lastTouch:"May 2026 — Hou Sang asked Ian the biggest gap between data and procurement. Ian responded with the 2D/3D framework.",trigger:"Hou Sang publishes new research on Chinese wind supply chain exports or offshore wind substation procurement.",nextAction:"Let him respond to the 2D/3D answer before sending anything else. Target next step: offer to be an anonymous industry source for his BNEF research.",alert:"Do not over-message. If no response within 5 days, send one light follow-up: 'Curious whether that maps to what you are seeing in the data.' Nothing more.",nsoAngle:"BNEF reaches every major offshore wind developer, operator and investor globally. A citation of NSO as a real-world case study in a BNEF supply chain report is earned media no budget can buy.",conversation:"Ian's 2D/3D framework: data presents supply chain as rational and efficient; reality is relationships, regional politics, real-time capacity constraints. China supply chain is not monolithic — clusters of regional ecosystems driven by long-standing relationships, local government incentives, yard-specific risk tolerance.",notes:""},
+  {id:"RC",initials:"RC",av:"av-blue",name:"Reddy Chetan",role:"Wind Turbine Manufacturing Expert — Offshore Wind Quality & Sales",category:"door",priority:"hot",platform:"LinkedIn",statusLabel:"Active — Shanghai meeting agreed in principle",statusDot:"dot-hot",hasConvo:true,needsAction:true,unverified:false,dealValue:0,strength:3,nextActionDate:"2026-06-07",lastTouch:"May 2026 — Reddy suggested meeting next time Ian is in Shanghai.",trigger:"Ian travels to Shanghai.",nextAction:"Reply confirming Shanghai meeting. Position as peer intelligence exchange, not a sales call.",alert:"Book the meeting before momentum fades. If no Shanghai trip within 6 weeks, propose a video call.",nsoAngle:"Reddy's network spans European offshore wind developers and procurement teams. Also a potential advocate — NSO proves his thesis that Chinese suppliers can meet European standards.",conversation:"Reddy responded warmly to Ian's comment on his Chinese supply chain post. Suggested meeting in Shanghai. Meeting agreed in principle.",notes:""},
+  {id:"KH",initials:"KH",av:"av-blue",name:"Kristina Helland-Hansen",role:"Director, Procurement & Supplier Relations — Wells, Equinor",category:"buyer",priority:"hot",platform:"LinkedIn",statusLabel:"Engaging — commented on new role announcement",statusDot:"dot-active",hasConvo:false,needsAction:true,unverified:false,dealValue:500000,strength:1,nextActionDate:"2026-06-10",lastTouch:"May 2026 — Ian commented on Kristina's new role announcement at Equinor.",trigger:"New Equinor platform contract announced or helideck replacement programme confirmed.",nextAction:"Send connection request referencing the comment. Once connected — 2 to 3 deposit comments before any DM.",alert:"June 2026 — if no connection accepted within 2 weeks, comment on her next post. Achilles FPAL registration must be complete before formal approach.",nsoAngle:"Director of Procurement at Equinor — the single most commercially valuable buyer in this CRM for NSO's helideck business.",conversation:"",notes:""},
+  {id:"MW",initials:"MW",av:"av-teal",name:"Markus Wiemann",role:"Global Head of Construction — Offshore Wind",category:"door",priority:"hot",platform:"LinkedIn",statusLabel:"DM sent — awaiting reply",statusDot:"dot-pending",hasConvo:false,needsAction:true,unverified:false,dealValue:0,strength:1,nextActionDate:"2026-06-15",lastTouch:"May 2026 — personalised DM sent referencing educator background and Baltica 2.",trigger:"Markus replies to DM.",nextAction:"If reply received: schedule video call. Goal — introduction to Dave Yew at Semco Maritime. Ask questions only, no pitch.",alert:"June 15 2026 — send one follow-up if no response.",nsoAngle:"Door to Semco Maritime — EPC on Baltica 2 (4 substations), Formosa 4, Hai Long, Baltic Power. One warm introduction = potential 10+ helidecks.",conversation:"",notes:""},
+  {id:"DY",initials:"DY",av:"av-coral",name:"Dave Yew",role:"Supply Chain Manager, Semco Maritime — Singapore",category:"buyer",priority:"hot",platform:"LinkedIn",statusLabel:"Connection request pending — verified contact",statusDot:"dot-pending",hasConvo:false,needsAction:true,unverified:false,dealValue:800000,strength:1,nextActionDate:"2026-06-04",lastTouch:"May 2026 — connection request sent.",trigger:"Dave Yew accepts connection request.",nextAction:"On acceptance — send immediately: NSO certified aluminium helidecks, Asian manufacturing, direct supply into PTSC M&C Vietnam yard for Baltica 2 and wider Semco substation programme.",alert:"If no acceptance within 1 week, approach via Markus Wiemann introduction instead.",nsoAngle:"Semco Maritime active on Baltica 2, Baltic Power, Formosa 4, Hai Long — potential 10+ helidecks.",conversation:"",notes:""},
+  {id:"JK",initials:"JK",av:"av-amber",name:"Jari Kauttonen",role:"Contractor Manager, Shanghai Waigaoqiao Shipbuilding (SWS) — Shanghai",category:"buyer",priority:"hot",platform:"LinkedIn",statusLabel:"Connected — message sent, awaiting reply",statusDot:"dot-active",hasConvo:true,needsAction:false,unverified:false,dealValue:1200000,strength:3,nextActionDate:"2026-06-07",lastTouch:"May 2026 — Ian messaged Jari referencing H1509 launch and new SWS cruise orders.",trigger:"Jari replies OR SWS announces new cruise ship build contract.",nextAction:"Wait for reply. If no reply within 1 week, send tighter follow-up anchored to the new cruise orders just signed.",alert:"Monitor SWS LinkedIn page weekly for new cruise contract announcements.",nsoAngle:"SWS signed two new cruise orders. NSO delivered interiors on both Adora vessels. Being the default interior turnkey partner on the next SWS programme is NSO's largest interior revenue opportunity.",conversation:"Ian messaged referencing H1509 launch and NSO's involvement on both Adora vessels. Awaiting reply.",notes:""},
+  {id:"CB",initials:"CB",av:"av-green",name:"Caio Bogado",role:"Chartering Manager — Sky Fusion Shipping, São Paulo",category:"door",priority:"warm",platform:"LinkedIn",statusLabel:"Connected — introduction message not yet sent",statusDot:"dot-active",hasConvo:false,needsAction:true,unverified:false,dealValue:0,strength:1,nextActionDate:"2026-06-03",lastTouch:"May 2026 — connected. No message sent yet.",trigger:"NSO requires project cargo freight quotation for helideck or module shipment from Yantai.",nextAction:"Send warm intro. Do not open with a freight request. Frame as peer maritime connection.",alert:"Monitor his posts for breakbulk and project cargo intelligence. When NSO has a helideck to ship, Caio is the first call.",nsoAngle:"Breakbulk and project cargo specialist. Helidecks are project cargo. Logistics Door — freight rates and route intelligence for NSO's global deliveries.",conversation:"",notes:""},
+  {id:"BT",initials:"BT",av:"av-purple",name:"Brian Thomson C.Eng MRINA",role:"Managing Director, Isle of Man Steam Packet Company",category:"buyer",priority:"warm",platform:"LinkedIn",statusLabel:"Warm — China yard visits planned end 2026",statusDot:"dot-active",hasConvo:true,needsAction:false,unverified:false,dealValue:600000,strength:3,nextActionDate:"2026-10-01",lastTouch:"May 15 2026 — Ian offered local support for China yard visits, CMHI Weihai mention and factory tour invite.",trigger:"Isle of Man Steam Packet announces fleet renewal or newbuild decision.",nextAction:"Do nothing until October 2026. Light touch re-engagement referencing yard visit timeline.",alert:"October 2026 — re-engage as yard visit planning becomes active.",nsoAngle:"RoPax interior turnkey scope. NSO Yantai adjacent to CMHI Weihai. Offer: airport pickup, yard introductions, factory tour.",conversation:"Ian offered China yard support. Brian confirmed yard visits planned end 2026 / early 2027.",notes:""},
+  {id:"YB",initials:"YB",av:"av-pink",name:"Yasemin Bilgehan Polat",role:"Sales Manager, Cemre Shipyard — Turkey",category:"door",priority:"warm",platform:"LinkedIn",statusLabel:"Connected — relationship building phase",statusDot:"dot-active",hasConvo:false,needsAction:true,unverified:false,dealValue:0,strength:2,nextActionDate:"2026-06-05",lastTouch:"May 2026 — connected. Commented on MF Hinnøy award post.",trigger:"Cemre Shipyard announces new RoPax or ferry newbuild contract.",nextAction:"Send warm introduction message. Focus on RoPax interior capability and NSO's P&O Pioneer delivery.",alert:"Monitor Cemre Shipyard LinkedIn page weekly. Any new ferry or RoPax order is an immediate outreach trigger.",nsoAngle:"Cemre builds RoPax and ferry vessels for European operators. NSO delivered P&O Pioneer interiors. Yasemin is the Door into Cemre's procurement team.",conversation:"",notes:""},
+  {id:"YC",initials:"YC",av:"av-amber",name:"Yang Chen 陈洋",role:"Managing Director & Chief Editor, Xinde Marine News",category:"amp",priority:"hot",platform:"LinkedIn",statusLabel:"Commented on Adora Flora City post — connection request pending",statusDot:"dot-pending",hasConvo:false,needsAction:true,unverified:false,dealValue:0,strength:1,nextActionDate:"2026-06-03",lastTouch:"May 2026 — Ian commented on Yang Chen's post about Adora Flora City and Magic City meeting at sea.",trigger:"Yang Chen engages with Ian's comment or accepts connection request.",nextAction:"Send connection request. On acceptance: offer the Adora story not the pitch.",alert:"If no connection within 1 week — comment on his next relevant post.",nsoAngle:"Xinde Marine News reaches every Chinese shipyard, cruise operator and maritime professional. One article on NSO's Adora work = market visibility advertising cannot replicate.",conversation:"",notes:""},
+  {id:"QX",initials:"QX",av:"av-teal",name:"Quin Xu",role:"China Newbuilding Orders & Vessel Deliveries — Maritime Intelligence",category:"amp",priority:"warm",platform:"LinkedIn",statusLabel:"Connected — introduction message sent",statusDot:"dot-active",hasConvo:false,needsAction:false,unverified:false,dealValue:0,strength:2,nextActionDate:"",lastTouch:"May 2026 — connected. Introduction message sent.",trigger:"Quin posts cruise ship, CSOV, RoPax, offshore platform, WTIV, or ferry newbuild from Chinese yard.",nextAction:"Monitor his posts daily. Every relevant newbuild post is an intelligence trigger.",alert:"Daily monitoring required. First mover advantage is real.",nsoAngle:"Live intelligence feed for Chinese newbuild orders. First to know = first to act on every relevant vessel contract.",conversation:"",notes:""},
+  {id:"KS",initials:"KS",av:"av-purple",name:"Karla Sofia Elizarraraz",role:"Supplier Engagement, Semco Maritime — Hamburg",category:"buyer",priority:"warm",platform:"LinkedIn",statusLabel:"Identified — do not contact yet",statusDot:"dot-watch",hasConvo:false,needsAction:false,unverified:false,dealValue:0,strength:0,nextActionDate:"2026-07-01",lastTouch:"Not contacted.",trigger:"Dave Yew contact at Semco is established and conversation progressed.",nextAction:"Do not contact until Dave Yew relationship is established. Then approach as sustainability supplier engagement lead.",alert:"July 2026 — if Dave Yew contact established, approach referencing NSO sustainability credentials.",nsoAngle:"Runs Semco supplier engagement meetings. Getting NSO into one of those meetings means formalised procurement visibility across Semco's entire project pipeline.",conversation:"",notes:""},
+  {id:"SWS",initials:"SWS",av:"av-teal",name:"Shanghai Waigaoqiao Shipbuilding",role:"Shipyard — Adora Magic City & Flora City builder. New cruise orders signed May 2026.",category:"buyer",priority:"hot",platform:"LinkedIn",statusLabel:"Active — Jari Kauttonen engaged, new cruise orders just signed",statusDot:"dot-hot",hasConvo:true,needsAction:true,unverified:false,dealValue:1200000,strength:3,nextActionDate:"2026-06-10",lastTouch:"May 2026 — Ian commented on Adora Flora City sea trials post. Jari Kauttonen messaged directly.",trigger:"SWS announces new cruise ship build contract or Jari replies.",nextAction:"Beyond Jari — search SWS LinkedIn people for outfitting, procurement, or subcontract manager roles.",alert:"Monitor SWS LinkedIn page weekly. New cruise order just signed.",nsoAngle:"NSO delivered on both Adora vessels. SWS signed two new cruise orders. Being the default interior supplier on the next SWS programme is NSO's single largest interior revenue opportunity.",conversation:"Ian commented on sea trials post. Jari Kauttonen messaged directly. Two new cruise orders signed.",notes:""},
+  {id:"VN",initials:"VN",av:"av-coral",name:"VARD / Norwind Offshore",role:"CSOV Builder & Operator — offshore wind vessels",category:"buyer",priority:"warm",platform:"LinkedIn",statusLabel:"Commented on NB 986 CSOV launch — sixth vessel",statusDot:"dot-active",hasConvo:false,needsAction:true,unverified:false,dealValue:150000,strength:1,nextActionDate:"2026-06-14",lastTouch:"May 2026 — Ian commented on sixth CSOV launch for Norwind Offshore at VARD Romania.",trigger:"VARD announces new CSOV or offshore wind vessel order.",nextAction:"Find VARD procurement contacts for helideck scope. VARD Interiors handles accommodation — do not pursue interior scope.",alert:"Monitor VARD LinkedIn weekly. Any new CSOV or wind vessel order is an immediate helideck opportunity.",nsoAngle:"CSOVs carry helidecks. Six vessels built for Norwind alone. NSO's cost position is strong vs European helideck manufacturers.",conversation:"",notes:""},
+  {id:"SM",initials:"SM",av:"av-gray",name:"Semco Maritime Procurement — To Be Identified",role:"Procurement Contact — Esbjerg HQ / Singapore / Poland (unverified)",category:"buyer",priority:"hot",platform:"LinkedIn",statusLabel:"Unverified — Dave Yew is primary verified contact",statusDot:"dot-unverified",hasConvo:false,needsAction:true,unverified:true,dealValue:800000,strength:0,nextActionDate:"2026-06-04",lastTouch:"Dave Yew identified as verified Singapore supply chain contact.",trigger:"Dave Yew conversation progresses and identifies additional Semco procurement contacts.",nextAction:"Approach via Dave Yew once connected. Ask who handles helideck specification for substation structural packages.",alert:"Immediate — Dave Yew connection request is the priority action.",nsoAngle:"Semco Maritime EPC on Baltica 2 (4 substations), Baltic Power, Formosa 4, Hai Long. Approved supplier list = potential 10+ helidecks.",conversation:"",notes:""},
+  {id:"BK",initials:"BK",av:"av-coral",name:"Burak Keçeci",role:"Managing Director, Raven Marine AS — Istanbul",category:"door",priority:"hot",platform:"LinkedIn",statusLabel:"Agent relationship — SEA-1806 helideck quotation active",statusDot:"dot-hot",hasConvo:true,needsAction:true,unverified:false,dealValue:120000,strength:4,nextActionDate:"2026-06-07",lastTouch:"April 29 2026 — helideck quotation exchange for SEA-1806.",trigger:"Update from Gelibolu Shipyard on SEA-1806 status.",nextAction:"Send concise follow-up on quotation status. Do not pressure.",alert:"Burak is NSO's official Turkey agent — keep him informed and engaged.",nsoAngle:"Official NSO agent in Türkiye. Opens Turkish shipbuilding market — Cemre, Gelibolu, and others. Active helideck quotation in progress.",conversation:"Helideck quotation exchange for SEA-1806. Active and progressing.",notes:""},
+  {id:"ZX",initials:"ZX",av:"av-teal",name:"ZHEN (ALLEN) XU",role:"Owner's Representative — KEEN Offshore Engineering",category:"door",priority:"hot",platform:"LinkedIn",statusLabel:"Engaged — WeChat confirmed April 2026",statusDot:"dot-active",hasConvo:true,needsAction:false,unverified:false,dealValue:200000,strength:4,nextActionDate:"2026-07-01",lastTouch:"April 30 2026 — WeChat confirmed. Full technical exchange on helidecks completed.",trigger:"Buyer confirms jack-up barge purchase and helideck scope triggered.",nextAction:"Wait for Zhen's update on buyer confirmation. Stay available, do not push.",alert:"The buyer's decision timeline is outside Zhen's control. Stay available, do not create pressure.",nsoAngle:"Door into jack-up and liftboat owner network. Full technical exchange already completed — NSO is pre-qualified in Zhen's mind.",conversation:"Full technical exchange on helideck specifications for jack-up barge. WeChat contact established. Waiting on buyer confirmation.",notes:""},
+  {id:"JV",initials:"JV",av:"av-blue",name:"Jens Vollers",role:"Newbuilding Project Manager, Viking Cruises",category:"door",priority:"hot",platform:"LinkedIn",statusLabel:"High-value cruise newbuild door — not yet contacted",statusDot:"dot-watch",hasConvo:false,needsAction:true,unverified:false,dealValue:800000,strength:0,nextActionDate:"2026-06-10",lastTouch:"Identified May 2026 — not yet contacted.",trigger:"Viking Cruises announces new vessel order or newbuild programme.",nextAction:"Send warm technical introduction referencing NSO's Adora cruise interior work.",alert:"Viking has an active newbuild programme. Engage before the RFQ stage.",nsoAngle:"Multi-yard cruise newbuild expert with direct procurement influence. Viking is one of the most active cruise newbuild clients globally.",conversation:"",notes:""},
+  {id:"JX",initials:"JX",av:"av-teal",name:"Jihong Xie",role:"General Manager, Offshore Wind China — GE Vernova",category:"amp",priority:"warm",platform:"LinkedIn",statusLabel:"Strategic amplifier — senior GE Vernova China wind executive",statusDot:"dot-watch",hasConvo:false,needsAction:true,unverified:false,dealValue:0,strength:0,nextActionDate:"2026-07-01",lastTouch:"Identified May 2026 — not yet contacted.",trigger:"GE Vernova announces new offshore wind project in China.",nextAction:"Send senior-level introduction. Do not pitch products. Frame as peer-to-peer exchange on China offshore wind supply chain development.",alert:"Any approach must be intellectual and peer-level — never transactional.",nsoAngle:"GM of GE Vernova Offshore Wind China. Supply chain intelligence and network reach covers every major Chinese offshore wind project.",conversation:"",notes:""},
+  {id:"BP",initials:"BP",av:"av-purple",name:"Bruce Peter",role:"Professor of Design History, Glasgow School of Art",category:"amp",priority:"warm",platform:"LinkedIn",statusLabel:"High-credibility academic amplifier — passenger ship design authority",statusDot:"dot-watch",hasConvo:false,needsAction:true,unverified:false,dealValue:0,strength:0,nextActionDate:"2026-07-15",lastTouch:"Identified May 2026 — not yet contacted.",trigger:"Bruce publishes new research or commentary on ferry or cruise ship design.",nextAction:"Send a warm, intellectual introduction — no product language whatsoever. Reference NSO's Adora work as a design history milestone.",alert:"Bruce Peter is allergic to sales language. Any transactional framing will permanently close the door.",nsoAngle:"One of the most respected academic voices in passenger ship design globally. His endorsement of NSO's Adora work carries credibility no marketing budget can manufacture.",conversation:"",notes:""},
+  {id:"LC",initials:"LC",av:"av-purple",name:"Luis de la Cova",role:"International BD Manager, Saint-Gobain Marine",category:"door",priority:"warm",platform:"LinkedIn",statusLabel:"High-value specification influencer — Saint-Gobain Marine",statusDot:"dot-watch",hasConvo:false,needsAction:true,unverified:false,dealValue:0,strength:0,nextActionDate:"2026-06-20",lastTouch:"Identified May 2026 — not yet contacted.",trigger:"Saint-Gobain Marine announces new marine specification partnerships on vessels where NSO has interior scope.",nextAction:"Send warm introduction referencing NSO's Adora interior work. Frame around shared project experience.",alert:"Do not pitch NSO products directly. Value is specification alignment for future projects.",nsoAngle:"Saint-Gobain Marine controls insulation, glazing, and flooring specifications. If NSO and SGM align on specifications before an RFQ, NSO's interior offer is stronger than competitors who coordinate late.",conversation:"",notes:""},
+  {id:"ZL",initials:"ZL",av:"av-teal",name:"赵磊 (Lei Zhao)",role:"Deputy General Manager, Yantai CIMC Raffles Offshore",category:"door",priority:"hot",platform:"WeChat",statusLabel:"Core China shipyard Door — ongoing active relationship",statusDot:"dot-hot",hasConvo:true,needsAction:true,unverified:false,dealValue:0,strength:5,nextActionDate:"2026-06-07",lastTouch:"May 2026 — ongoing NSO and CIMC Raffles engagement via WeChat.",trigger:"New CIMC Raffles offshore wind, SOV, CSOV, or offshore platform project announced.",nextAction:"Maintain regular WeChat contact. Share NSO execution stories and technical updates. Quality over frequency.",alert:"Do not flood with generic marketing. One relevant message per week maximum.",nsoAngle:"NSO's most critical relationship inside CIMC Raffles Yantai — the yard where Van Oord H618, Pelican Aqua, and multiple NSO projects sit.",conversation:"Ongoing WeChat discussions on NSO and CIMC Raffles project collaboration. Active and warm.",notes:""},
+  {id:"KCL",initials:"KCL",av:"av-blue",name:"Kristian Carøe Lind",role:"CTO, OSK Design — Denmark",category:"door",priority:"hot",platform:"LinkedIn",statusLabel:"High-value design authority — OSK specification influence",statusDot:"dot-watch",hasConvo:false,needsAction:true,unverified:false,dealValue:0,strength:0,nextActionDate:"2026-06-15",lastTouch:"Identified May 2026 — not yet contacted.",trigger:"OSK Design announces new RoPax, ferry, SOV, or passenger vessel design contract at a Chinese or Asian yard.",nextAction:"Send peer-level introduction referencing OSK's design credit on P&O Pioneer where NSO delivered the interior.",alert:"Do not pitch. The value is becoming OSK's recommended interior execution partner in China.",nsoAngle:"OSK Design is one of Scandinavia's most prolific marine design firms. If NSO becomes OSK's trusted interior partner in China, every OSK-designed vessel built at a Chinese yard becomes a natural opportunity.",conversation:"",notes:""},
+  {id:"GK",initials:"GK",av:"av-green",name:"Gary Kuek",role:"Assistant Structural Engineer, Marco Polo Marine — Singapore",category:"door",priority:"nurture",platform:"LinkedIn",statusLabel:"Early-career technical contact — long-term investment",statusDot:"dot-watch",hasConvo:false,needsAction:false,unverified:false,dealValue:0,strength:0,nextActionDate:"",lastTouch:"Identified May 2026.",trigger:"Marco Polo Marine announces new CSOV, SOV, or offshore vessel order.",nextAction:"Monitor until project trigger. When Marco Polo announces a relevant vessel, reach out with a technical comment.",alert:"Long-term value. Gary is early career — he will grow in influence. Invest now at low cost.",nsoAngle:"Marco Polo Marine is an active CSOV and offshore vessel operator. Gary is a future technical influencer and procurement voice.",conversation:"",notes:""}
+];
+
+// ── FIREBASE WRITE ────────────────────────────────────────────────────────────
+async function writeContact(data){
+  setSyncState('syncing');
+  try{
+    await setDoc(doc(db,'crm_contacts',data.id), data);
+    setSyncState('synced');
+  } catch(e){
+    console.error('Write error:',e);
+    setSyncState('error');
+    alert('Save failed — check your connection.');
+  }
+}
+
+async function removeContact(id){
+  setSyncState('syncing');
+  try{
+    await deleteDoc(doc(db,'crm_contacts',id));
+    setSyncState('synced');
+  } catch(e){
+    console.error('Delete error:',e);
+    setSyncState('error');
+  }
+}
+
+// ── REAL-TIME LISTENER ────────────────────────────────────────────────────────
+function startListener(){
+  document.getElementById('loading-msg').textContent = 'Loading contacts...';
+  setSyncState('syncing');
+
+  const q = query(contactsCol, orderBy('name'));
+  onSnapshot(q, async (snapshot) => {
+    if(snapshot.empty){
+      // First run — seed the database
+      document.getElementById('loading-msg').textContent = 'First run — seeding contacts...';
+      for(const c of SEED){
+        await setDoc(doc(db,'crm_contacts',c.id), c);
+      }
+    } else {
+      contacts = [];
+      snapshot.forEach(d => contacts.push({...d.data(), id:d.id}));
+      setSyncState('synced');
+      document.getElementById('loading-screen').classList.add('hidden');
+      render();
+    }
+  }, err => {
+    console.error('Snapshot error:',err);
+    setSyncState('error');
+    document.getElementById('loading-msg').textContent = 'Connection error — check your network.';
+  });
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function daysUntil(d){
+  if(!d) return null;
+  const t=new Date(); t.setHours(0,0,0,0);
+  return Math.round((new Date(d)-t)/(864e5));
+}
+function formatDate(d){
+  if(!d) return '—';
+  return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+}
+function fmtVal(v){
+  if(!v||v===0) return null;
+  if(v>=1e6) return '$'+(v/1e6).toFixed(1)+'M';
+  if(v>=1e3) return '$'+(v/1e3).toFixed(0)+'K';
+  return '$'+v;
+}
+function totalPipeline(){
+  return contacts.reduce((s,c)=>s+(c.dealValue||0),0);
+}
+function overdueCt(){
+  return contacts.filter(c=>{ const d=daysUntil(c.nextActionDate); return c.needsAction&&d!==null&&d<0; }).length;
+}
+function getCatLabel(c){return{buyer:'Buyer',door:'Door',amp:'Amplifier'}[c]||c}
+function getPriLabel(p){return{hot:'🔴 Hot',warm:'🟡 Warm',nurture:'🟢 Nurture'}[p]||p}
+function getStrengthLabel(s){return['None','1 — Cold','2 — Aware','3 — Warm','4 — Strong','5 — Partner'][s]||''}
+
+// ── FILTER / SORT / SEARCH ────────────────────────────────────────────────────
+function matchContact(c){
+  if(currentFilter==='buyer')   return c.category==='buyer';
+  if(currentFilter==='door')    return c.category==='door';
+  if(currentFilter==='amp')     return c.category==='amp';
+  if(currentFilter==='hot')     return c.priority==='hot';
+  if(currentFilter==='action')  return c.needsAction;
+  if(currentFilter==='overdue'){ const d=daysUntil(c.nextActionDate); return c.needsAction&&d!==null&&d<0; }
+  if(currentFilter==='convo')   return c.hasConvo;
+  return true;
+}
+function matchSearch(c){
+  if(!currentSearch) return true;
+  const q=currentSearch.toLowerCase();
+  return [c.name,c.role,c.platform,c.category,c.priority,c.statusLabel,c.lastTouch,c.trigger,c.nextAction,c.alert,c.nsoAngle,c.conversation,c.notes].some(v=>(v||'').toLowerCase().includes(q));
+}
+function sortContacts(list){
+  return [...list].sort((a,b)=>{
+    if(currentSort==='priority')        return (PRIORITY_ORDER[a.priority]||9)-(PRIORITY_ORDER[b.priority]||9);
+    if(currentSort==='nextActionDate')  { const da=a.nextActionDate||'9999',db=b.nextActionDate||'9999'; return da<db?-1:da>db?1:0; }
+    if(currentSort==='name')            return (a.name||'').localeCompare(b.name||'');
+    if(currentSort==='dealValue')       return (b.dealValue||0)-(a.dealValue||0);
+    if(currentSort==='strength')        return (b.strength||0)-(a.strength||0);
+    return 0;
+  });
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render(){
+  const list = sortContacts(contacts.filter(c=>matchContact(c)&&matchSearch(c)));
+  const grid = document.getElementById('grid');
+
+  if(!list.length){
+    grid.innerHTML='<div class="empty-state">No contacts match your filters.</div>';
+    updateStats();
+    return;
+  }
+
+  grid.innerHTML = list.map(c=>{
+    const days = daysUntil(c.nextActionDate);
+    let daysBadge='';
+    if(days!==null&&c.needsAction){
+      if(days<0)      daysBadge=`<span class="badge badge-overdue">${Math.abs(days)}d overdue</span>`;
+      else if(days<=7) daysBadge=`<span class="badge badge-due-soon">Due in ${days}d</span>`;
+    }
+    const valBadge = c.dealValue?`<span class="badge" style="background:var(--green-bg);color:var(--green-text)">${fmtVal(c.dealValue)}</span>`:'';
+    const uvBanner = c.unverified?`<div style="background:var(--red-bg);color:var(--red-text);border-radius:var(--r);padding:5px 9px;margin-bottom:8px;font-size:10px;display:flex;gap:5px;align-items:center;font-weight:500"><i class="ti ti-alert-triangle"></i> Unverified — do not contact until confirmed</div>`:'';
+    const convBox  = c.conversation?`<div class="conv-box"><div class="conv-label">Conversation log</div><div class="conv-text">${c.conversation}</div></div>`:'';
+
+    let sdots='';
+    for(let i=1;i<=5;i++){
+      const filled=i<=(c.strength||0)?`filled-${i}`:'';
+      sdots+=`<div class="sdot ${filled}" onclick="setStrength('${c.id}',${i})" title="${getStrengthLabel(i)}"></div>`;
+    }
+
+    const cardClass = c.unverified?'status-unverified':c.priority==='hot'?'status-hot':c.statusDot==='dot-pending'?'status-pending':c.statusDot==='dot-watch'?'status-watch':'';
+    const overdue   = (days!==null&&days<0&&c.needsAction)?' overdue':'';
+
+    return `<div class="card ${cardClass}${overdue}" data-id="${c.id}" data-cat="${c.category}" data-pri="${c.priority}" data-search="${[c.name,c.role,c.platform,c.category,c.statusLabel,c.lastTouch,c.trigger,c.nextAction,c.alert,c.nsoAngle,c.conversation,c.notes].join(' ').toLowerCase()}">
+      ${uvBanner}
+      <div class="card-top">
+        <div class="avatar ${c.av}">${c.initials}</div>
+        <div class="card-name-area"><div class="cname">${c.name}</div><div class="crole">${c.role}</div></div>
+        <button class="edit-btn" onclick="openEditModal('${c.id}')" title="Edit"><i class="ti ti-pencil"></i></button>
+      </div>
+      <div class="badges">
+        <span class="badge cat-${c.category}">${getCatLabel(c.category)}</span>
+        <span class="badge pri-${c.priority}">${getPriLabel(c.priority)}</span>
+        <span class="badge badge-plat"><i class="ti ti-brand-linkedin" style="font-size:10px;vertical-align:-1px"></i> ${c.platform}</span>
+        ${valBadge}${daysBadge}
+      </div>
+      <div class="status-row"><div class="status-dot ${c.statusDot||'dot-active'}"></div><div class="status-text">${c.statusLabel}</div></div>
+      <div class="strength-row">
+        <div class="strength-label">Relationship</div>
+        <div class="strength-dots">${sdots}</div>
+        <div class="strength-text">${getStrengthLabel(c.strength||0)}</div>
+      </div>
+      <div class="divider"></div>
+      <div class="sec-label">Last touch</div>
+      <div class="info-row"><i class="ti ti-clock"></i><span>${c.lastTouch||'—'}</span></div>
+      <div class="date-field" style="margin-top:6px">
+        <label>Next action</label>
+        <input type="date" value="${c.nextActionDate||''}" onchange="setDate('${c.id}',this.value)">
+      </div>
+      <div class="sec-label" style="margin-top:4px">Trigger</div>
+      <div class="info-row"><i class="ti ti-bolt"></i><span>${c.trigger||'—'}</span></div>
+      <div class="action-box"><div class="action-label">Next move</div><div class="action-text">${c.nextAction||'—'}</div></div>
+      <div class="alert-box"><div class="alert-label">Alert</div><div class="alert-text">${c.alert||'—'}</div></div>
+      ${convBox}
+      <div class="divider"></div>
+      <div class="sec-label">NSO angle</div>
+      <div class="nso-angle">${c.nsoAngle||'—'}</div>
+      <div class="divider"></div>
+      <div class="sec-label">Notes</div>
+      <div class="notes-area">
+        <textarea id="notes-${c.id}" placeholder="Add meeting notes, intel, strategy...">${c.notes||''}</textarea>
+        <button class="notes-save" onclick="saveNotes('${c.id}')">Save notes</button>
+        <span class="notes-saved" id="ns-${c.id}">✓ Saved</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  updateStats();
+}
+
+function updateStats(){
+  const t=contacts.length;
+  const hot=contacts.filter(c=>c.priority==='hot').length;
+  const buyer=contacts.filter(c=>c.category==='buyer').length;
+  const door=contacts.filter(c=>c.category==='door').length;
+  const amp=contacts.filter(c=>c.category==='amp').length;
+  const ov=overdueCt();
+  const conv=contacts.filter(c=>c.hasConvo).length;
+  const action=contacts.filter(c=>c.needsAction).length;
+  const pipe=totalPipeline();
+
+  const sv=id=>{const el=document.getElementById('sv-'+id);if(el)el.textContent=eval(id);}
+  document.getElementById('sv-all').textContent=t;
+  document.getElementById('sv-hot').textContent=hot;
+  document.getElementById('sv-buyer').textContent=buyer;
+  document.getElementById('sv-door').textContent=door;
+  document.getElementById('sv-amp').textContent=amp;
+  document.getElementById('sv-overdue').textContent=ov;
+  document.getElementById('sv-convo').textContent=conv;
+  document.getElementById('h-total').textContent=t;
+  document.getElementById('h-pipeline').textContent=fmtVal(pipe)||'$0';
+  document.getElementById('h-overdue').textContent=ov;
+
+  const cnt=id=>{const el=document.getElementById('c-'+id);if(el)el.textContent=contacts.filter(c=>matchCnt(id,c)).length;};
+  function matchCnt(f,c){
+    if(f==='all') return true;
+    if(f==='buyer') return c.category==='buyer';
+    if(f==='door') return c.category==='door';
+    if(f==='amp') return c.category==='amp';
+    if(f==='hot') return c.priority==='hot';
+    if(f==='action') return c.needsAction;
+    if(f==='overdue'){ const d=daysUntil(c.nextActionDate); return c.needsAction&&d!==null&&d<0; }
+    if(f==='convo') return c.hasConvo;
+    return true;
+  }
+  ['all','buyer','door','amp','hot','action','overdue','convo'].forEach(cnt);
+}
+
+// ── INTERACTIONS ──────────────────────────────────────────────────────────────
+window.filterBy = function(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.fbtn,.stat').forEach(b=>b.classList.remove('active','active-stat'));
+  if(btn) btn.classList.add(btn.classList.contains('stat')?'active-stat':'active');
+  render();
+}
+window.doSearch = function(q){ currentSearch=q.toLowerCase(); render(); }
+window.sortBy   = function(v){ currentSort=v; render(); }
+
+window.setStrength = function(id,val){
+  const c=contacts.find(x=>x.id===id);
+  if(!c) return;
+  c.strength = c.strength===val?val-1:val;
+  writeContact(c);
+  render();
+}
+window.setDate = function(id,val){
+  const c=contacts.find(x=>x.id===id);
+  if(!c) return;
+  c.nextActionDate=val;
+  writeContact(c);
+  updateStats();
+}
+window.saveNotes = function(id){
+  const c=contacts.find(x=>x.id===id);
+  if(!c) return;
+  const ta=document.getElementById('notes-'+id);
+  if(!ta) return;
+  c.notes=ta.value;
+  writeContact(c);
+  const conf=document.getElementById('ns-'+id);
+  if(conf){conf.style.opacity=1;setTimeout(()=>conf.style.opacity=0,2000);}
+}
+
+// ── EDIT MODAL ────────────────────────────────────────────────────────────────
+window.openAddModal = function(){
+  editingId=null;
+  document.getElementById('modal-title').textContent='Add new contact';
+  document.getElementById('btn-delete').style.display='none';
+  buildForm({id:'',initials:'',av:'av-blue',name:'',role:'',category:'door',priority:'warm',platform:'LinkedIn',statusLabel:'',statusDot:'dot-active',hasConvo:false,needsAction:false,unverified:false,dealValue:0,strength:0,nextActionDate:'',lastTouch:'',trigger:'',nextAction:'',alert:'',nsoAngle:'',conversation:'',notes:''});
+  document.getElementById('modal-overlay').classList.add('open');
+}
+window.openEditModal = function(id){
+  editingId=id;
+  const c=contacts.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('modal-title').textContent='Edit — '+c.name;
+  document.getElementById('btn-delete').style.display='block';
+  buildForm(c);
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function buildForm(c){
+  document.getElementById('modal-body').innerHTML=`
+    <div class="form-grid">
+      <div class="form-row"><label>Name</label><input id="f-name" value="${c.name||''}"></div>
+      <div class="form-row"><label>Initials (2-3 chars)</label><input id="f-initials" value="${c.initials||''}" maxlength="3"></div>
+    </div>
+    <div class="form-row"><label>Role / Company</label><input id="f-role" value="${c.role||''}"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Category</label><select id="f-category"><option value="buyer" ${c.category==='buyer'?'selected':''}>Buyer</option><option value="door" ${c.category==='door'?'selected':''}>Door</option><option value="amp" ${c.category==='amp'?'selected':''}>Amplifier</option></select></div>
+      <div class="form-row"><label>Priority</label><select id="f-priority"><option value="hot" ${c.priority==='hot'?'selected':''}>Hot</option><option value="warm" ${c.priority==='warm'?'selected':''}>Warm</option><option value="nurture" ${c.priority==='nurture'?'selected':''}>Nurture</option></select></div>
+      <div class="form-row"><label>Platform</label><select id="f-platform"><option value="LinkedIn" ${c.platform==='LinkedIn'?'selected':''}>LinkedIn</option><option value="WeChat" ${c.platform==='WeChat'?'selected':''}>WeChat</option><option value="Email" ${c.platform==='Email'?'selected':''}>Email</option><option value="Other" ${c.platform==='Other'?'selected':''}>Other</option></select></div>
+      <div class="form-row"><label>Avatar colour</label><select id="f-av"><option value="av-blue" ${c.av==='av-blue'?'selected':''}>Blue</option><option value="av-teal" ${c.av==='av-teal'?'selected':''}>Teal</option><option value="av-amber" ${c.av==='av-amber'?'selected':''}>Amber</option><option value="av-purple" ${c.av==='av-purple'?'selected':''}>Purple</option><option value="av-coral" ${c.av==='av-coral'?'selected':''}>Coral</option><option value="av-pink" ${c.av==='av-pink'?'selected':''}>Pink</option><option value="av-green" ${c.av==='av-green'?'selected':''}>Green</option><option value="av-gray" ${c.av==='av-gray'?'selected':''}>Gray</option></select></div>
+      <div class="form-row"><label>Est. deal value ($)</label><input id="f-deal" type="number" value="${c.dealValue||0}" min="0"></div>
+      <div class="form-row"><label>Next action date</label><input id="f-date" type="date" value="${c.nextActionDate||''}"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Has active conversation?</label><select id="f-conv"><option value="false" ${!c.hasConvo?'selected':''}>No</option><option value="true" ${c.hasConvo?'selected':''}>Yes</option></select></div>
+      <div class="form-row"><label>Needs action?</label><select id="f-action"><option value="false" ${!c.needsAction?'selected':''}>No</option><option value="true" ${c.needsAction?'selected':''}>Yes</option></select></div>
+      <div class="form-row"><label>Unverified?</label><select id="f-uv"><option value="false" ${!c.unverified?'selected':''}>No</option><option value="true" ${c.unverified?'selected':''}>Yes</option></select></div>
+      <div class="form-row"><label>Status label</label><input id="f-status" value="${c.statusLabel||''}"></div>
+    </div>
+    <div class="form-row"><label>Last touch</label><input id="f-touch" value="${c.lastTouch||''}"></div>
+    <div class="form-row"><label>Trigger event</label><textarea id="f-trigger">${c.trigger||''}</textarea></div>
+    <div class="form-row"><label>Next action</label><textarea id="f-next">${c.nextAction||''}</textarea></div>
+    <div class="form-row"><label>Alert</label><textarea id="f-alert">${c.alert||''}</textarea></div>
+    <div class="form-row"><label>NSO angle</label><textarea id="f-angle">${c.nsoAngle||''}</textarea></div>
+    <div class="form-row"><label>Conversation log</label><textarea id="f-convo">${c.conversation||''}</textarea></div>
+    <div class="form-row"><label>Notes</label><textarea id="f-notes">${c.notes||''}</textarea></div>
+  `;
+}
+window.saveContact = function(){
+  const gv=id=>document.getElementById(id)?.value||'';
+  const gb=id=>document.getElementById(id)?.value==='true';
+  const name=gv('f-name').trim();
+  if(!name){alert('Name is required');return;}
+  const data={
+    name, initials:(gv('f-initials')||name.substring(0,2)).toUpperCase(),
+    role:gv('f-role'), category:gv('f-category'), priority:gv('f-priority'),
+    platform:gv('f-platform'), av:gv('f-av'),
+    dealValue:parseInt(gv('f-deal'))||0, nextActionDate:gv('f-date'),
+    hasConvo:gb('f-conv'), needsAction:gb('f-action'), unverified:gb('f-uv'),
+    statusLabel:gv('f-status'), lastTouch:gv('f-touch'),
+    trigger:gv('f-trigger'), nextAction:gv('f-next'),
+    alert:gv('f-alert'), nsoAngle:gv('f-angle'),
+    conversation:gv('f-convo'), notes:gv('f-notes'), strength:0
+  };
+  const dotMap={hot:'dot-hot',warm:'dot-pending',nurture:'dot-watch'};
+  data.statusDot=data.unverified?'dot-unverified':dotMap[data.priority]||'dot-active';
+  if(editingId){
+    const idx=contacts.findIndex(x=>x.id===editingId);
+    if(idx>-1){data.id=editingId;data.strength=contacts[idx].strength||0;}
+  } else {
+    data.id='c_'+Date.now();
+  }
+  writeContact(data);
+  closeModal();
+}
+window.deleteContact = function(){
+  if(!editingId) return;
+  if(!confirm('Delete this contact permanently?')) return;
+  removeContact(editingId);
+  closeModal();
+}
+window.closeModal = function(){document.getElementById('modal-overlay').classList.remove('open');}
+window.closeModalOutside = function(e){if(e.target===document.getElementById('modal-overlay'))closeModal();}
+
+// ── MODULE START ──────────────────────────────────────────────────────────────
+function moduleStart(){
+  if(window._crmAuthGranted){
+    startListener();
+  } else {
+    const iv=setInterval(()=>{
+      if(window._crmAuthGranted){ clearInterval(iv); startListener(); }
+    },200);
+  }
+}
+moduleStart();
+
+</script>
+</body>
+</html>
