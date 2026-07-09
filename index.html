@@ -226,14 +226,12 @@ input[type=search]:focus{border-color:#1558A8}
     <div class="pw-logo-mark">NSO</div>
     <div class="pw-title">Social CRM</div>
     <div class="pw-sub">North Sea Offshore · Market Development</div>
+    <input class="pw-input" id="pw-email-input" type="email" placeholder="Email" maxlength="60"
+      onkeydown="if(event.key==='Enter') checkPassword()" style="margin-bottom:8px;letter-spacing:normal;">
     <input class="pw-input" id="pw-input" type="password" placeholder="Enter password" maxlength="30"
       onkeydown="if(event.key==='Enter') checkPassword()">
     <div class="pw-error" id="pw-error"></div>
     <button class="pw-btn" onclick="checkPassword()">Enter</button>
-    <label class="pw-remember">
-      <input type="checkbox" id="pw-remember" checked>
-      Remember me on this device
-    </label>
   </div>
 </div>
 
@@ -310,28 +308,39 @@ input[type=search]:focus{border-color:#1558A8}
   </div>
 </div>
 
-<!-- ═══ PLAIN SCRIPT — password gate runs before Firebase module ═══ -->
-<script>
-const CORRECT_PASSWORD = 'nso2026';
-const AUTH_KEY = 'nso_crm_auth_v1';
+<!-- ═══ FIREBASE AUTH MODULE — real login, replaces old password gate ═══ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-function checkPassword(){
+const firebaseConfig = {
+  apiKey:            "AIzaSyAM6d3ejWi6WFkA18OnjDFNPmeYkLK8XAw",
+  authDomain:        "nso-pipeline.firebaseapp.com",
+  projectId:         "nso-pipeline",
+  storageBucket:     "nso-pipeline.firebasestorage.app",
+  messagingSenderId: "445104057357",
+  appId:             "1:445104057357:web:b20e098b04a3a81790b944"
+};
+
+const authApp = initializeApp(firebaseConfig, "auth-app");
+const auth = getAuth(authApp);
+
+window.checkPassword = async function(){
+  const emailInput = document.getElementById('pw-email-input');
   const input   = document.getElementById('pw-input');
   const error   = document.getElementById('pw-error');
-  const remember= document.getElementById('pw-remember');
+  const email   = emailInput.value.trim();
   const val     = input.value.trim();
 
-  if(val === CORRECT_PASSWORD){
-    if(remember.checked){
-      localStorage.setItem(AUTH_KEY, 'granted');
-    } else {
-      sessionStorage.setItem(AUTH_KEY, 'granted');
-    }
-    document.getElementById('pw-gate').style.display    = 'none';
-    document.getElementById('loading-screen').classList.remove('hidden');
-    window._crmAuthGranted = true;
-  } else {
-    error.textContent = 'Incorrect password. Try again.';
+  error.textContent = '';
+
+  try {
+    await signInWithEmailAndPassword(auth, email, val);
+    // success is handled below by onAuthStateChanged
+  } catch (e) {
+    error.textContent = 'Incorrect email or password. Try again.';
     input.value = '';
     input.classList.remove('shake');
     void input.offsetWidth;
@@ -339,23 +348,19 @@ function checkPassword(){
     setTimeout(()=>input.classList.remove('pwshake'), 500);
     input.focus();
   }
-}
+};
 
-function initAuth(){
-  const granted =
-    localStorage.getItem(AUTH_KEY)    === 'granted' ||
-    sessionStorage.getItem(AUTH_KEY)  === 'granted';
-
-  if(granted){
-    document.getElementById('pw-gate').style.display    = 'none';
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    document.getElementById('pw-gate').style.display = 'none';
     document.getElementById('loading-screen').classList.remove('hidden');
     window._crmAuthGranted = true;
   } else {
-    setTimeout(()=>{ const i=document.getElementById('pw-input'); if(i) i.focus(); }, 120);
+    document.getElementById('pw-gate').style.display = '';
+    document.getElementById('loading-screen').classList.add('hidden');
+    setTimeout(()=>{ const i=document.getElementById('pw-email-input'); if(i) i.focus(); }, 120);
   }
-}
-
-initAuth();
+});
 </script>
 
 <!-- ═══ FIREBASE MODULE ═══ -->
